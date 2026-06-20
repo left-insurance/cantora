@@ -2,46 +2,60 @@
 import { useState } from "react";
 
 export default function Home() {
-  const [songs, setSongs] = useState([]);
-  const [mood, setMood] = useState("");
   const [darkMode, setDarkMode] = useState(true);
+  const [image, setImage] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [aiResult, setAiResult] = useState([]); 
+  const [loading, setLoading] = useState(false);                         
 
-  function findSongs() {
-    if (mood === "Happy") {
-      setSongs([
-        "Happy",
-        "On Top of the World",
-        "Best Day of My Life"
-      ]);
-    } else if (mood === "Sad") {
-      setSongs([
-        "Someone Like You",
-        "Let Her Go",
-        "Photograph"
-      ]);
-    } else if (mood === "Chill") {
-      setSongs([
-        "Golden Hour",
-        "Sunset Lover",
-        "Yellow"
-      ]);
-    } else if (mood === "Romantic") {
-      setSongs([
-        "Perfect",
-        "Until I Found You",
-        "All of Me"
-      ]);
-    } else {
-      setSongs(["Please select a mood"]);
-    }
+  async function analyzeImage() {
+  if (!imageFile) {
+    alert("Please upload an image first");
+    return;
   }
 
-  return (
+  const base64 = await fileToBase64(imageFile);
+  setLoading(true);
+
+  const res = await fetch("/api/analyze", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      image: base64,
+    }),
+  });
+
+  const data = await res.json();
+  setLoading(false);
+
+  if (data.result) {
+    setAiResult(data.result.split("\n"));
+  }
+}
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.readAsDataURL(file);
+
+    reader.onload = () => {
+      resolve(reader.result);
+    };
+
+    reader.onerror = (error) => {
+      reject(error);
+    };
+  });
+}
+
+return (
     <main
       className={`min-h-screen flex flex-col items-center justify-center px-6 transition-all ${
-        darkMode
-          ? "bg-gradient-to-br from-black via-slate-900 to-purple-950 text-white"
-          : "bg-gradient-to-br from-white via-slate-100 to-purple-100 text-black"
+       darkMode
+  ? "bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#4c1d95]"
+  : "bg-gradient-to-br from-[#f8fafc] via-[#eef2ff] to-[#ddd6fe]"
       }`}
     >
       {/* Toggle */}
@@ -61,14 +75,20 @@ export default function Home() {
       </div>
 
       {/* Card */}
-      <div
-        className={`w-full max-w-md rounded-3xl p-8 backdrop-blur-lg border ${
-          darkMode
-            ? "bg-white/10 border-white/20"
-            : "bg-white/70 border-gray-300"
-        }`}
-      >
-        <h1 className="text-6xl font-extrabold text-center mb-3">
+     <div
+  className={`w-full max-w-xl rounded-[32px] p-8 backdrop-blur-2xl border shadow-2xl ${
+    darkMode
+      ? "bg-white/5 border-white/10"
+      : "bg-white/70 border-gray-300"
+  }`}
+>
+        <h1
+  className={`text-7xl font-black tracking-tight text-center mb-3 ${
+    darkMode
+      ? "text-white"
+      : "bg-gradient-to-r from-violet-700 to-fuchsia-600 bg-clip-text text-transparent"
+  }`}
+>
           Cantora
         </h1>
 
@@ -81,66 +101,78 @@ export default function Home() {
         </p>
 
         <div className="flex flex-col gap-4">
-          <select
-            className={`p-4 rounded-xl ${
-              darkMode
-                ? "bg-white/10 text-white"
-                : "bg-white text-black"
-            }`}
-            onChange={(e) => setMood(e.target.value)}
-          >
-            <option>Select Mood</option>
-            <option>Happy</option>
-            <option>Sad</option>
-            <option>Chill</option>
-            <option>Romantic</option>
-          </select>
 
-          <select
-            className={`p-4 rounded-xl ${
-              darkMode
-                ? "bg-white/10 text-white"
-                : "bg-white text-black"
-            }`}
-          >
-            <option>Select Photo Type</option>
-            <option>Sunset</option>
-            <option>Travel</option>
-            <option>Gym</option>
-            <option>Friends</option>
-          </select>
+         <label
+  htmlFor="file-upload"
+  className="cursor-pointer text-center bg-violet-600 hover:bg-violet-700 transition-all p-4 rounded-2xl font-semibold"
+>
+  📸 Upload Photo
+</label>
 
-          <select
-            className={`p-4 rounded-xl ${
-              darkMode
-                ? "bg-white/10 text-white"
-                : "bg-white text-black"
-            }`}
-          >
-            <option>Select Language</option>
-            <option>English</option>
-            <option>Hindi</option>
-            <option>Malayalam</option>
-          </select>
+<input
+  id="file-upload"
+  type="file"
+  accept="image/*"
+  className="hidden"
+  onChange={(e) => {
+    const file = e.target.files[0];
 
-          <button
-            onClick={findSongs}
-            className="bg-purple-600 hover:bg-purple-700 p-4 rounded-xl font-semibold text-lg"
-          >
-            Find Songs
-          </button>
+    if (file) {
+      setImage(URL.createObjectURL(file));
+      setImageFile(file);
+    }
+  }}
+/>
+ {imageFile && (
+  <p
+    className={`text-center text-sm font-medium ${
+      darkMode ? "text-slate-400" : "text-slate-700"
+    }`}
+  >
+    {imageFile.name}
+  </p>
+)}
+  {image && (
+  <img
+    src={image}
+    alt="Preview"
+    className="w-full rounded-2xl shadow-xl border border-white/10"
+  />
+)}
 
-          {mood && (
-            <h2 className="text-xl font-bold text-center mt-4">
-              Songs for {mood} Mood
-            </h2>
-          )}
-
-          {songs.map((song) => (
-            <p key={song} className="text-center">
-              {song}
-            </p>
-          ))}
+{image && (
+  <button
+  onClick={analyzeImage}
+  disabled={loading}
+ className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:scale-[1.02] transition-all py-4 px-6 rounded-2xl font-semibold shadow-lg" 
+>
+  {loading ? (
+  <div className="flex items-center justify-center gap-2">
+    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+    <span>Finding Songs...</span>
+  </div>
+) : (
+  "✨ Analyze Image"
+)}
+</button>
+)}
+         
+   {aiResult.length > 0 && (
+  <div className="mt-6 space-y-3">
+    {aiResult.map((song, index) => (
+      <div
+        key={index}
+       className={`p-4 rounded-2xl border ${
+  darkMode
+    ? "bg-white/10 border-white/10 text-white"
+    : "bg-white/80 border-slate-200 text-slate-800"
+}`}
+      >
+        {song}
+      </div>
+    ))}
+  </div>
+)}
         </div>
       </div>
     </main>
