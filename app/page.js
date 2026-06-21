@@ -36,17 +36,38 @@ export default function Home() {
 }
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+    const img = new Image();
 
-    reader.readAsDataURL(file);
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
 
-    reader.onload = () => {
-      resolve(reader.result);
+      const maxWidth = 800;
+      const scale = Math.min(maxWidth / img.width, 1);
+
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+
+      const ctx = canvas.getContext("2d");
+
+      ctx.drawImage(
+        img,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      const compressed = canvas.toDataURL(
+        "image/jpeg",
+        0.7
+      );
+
+      resolve(compressed);
     };
 
-    reader.onerror = (error) => {
-      reject(error);
-    };
+    img.onerror = reject;
+
+    img.src = URL.createObjectURL(file);
   });
 }
 
@@ -117,8 +138,10 @@ return (
   onChange={(e) => {
     const file = e.target.files[0];
 
-    if (file.size > 2 * 1024 * 1024) {
-  alert("Please upload an image smaller than 2 MB");
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+  alert("Please upload an image smaller than 10 MB");
   return;
 }
 
