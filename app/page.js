@@ -117,6 +117,11 @@ return (
   onChange={(e) => {
     const file = e.target.files[0];
 
+    if (file.size > 2 * 1024 * 1024) {
+  alert("Please upload an image smaller than 2 MB");
+  return;
+}
+
     if (file) {
       setImage(URL.createObjectURL(file));
       setImageFile(file);
