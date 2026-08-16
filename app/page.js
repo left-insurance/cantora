@@ -49,9 +49,8 @@ export default function Home() {
     if (audioPlayerRef.current) {
       audioPlayerRef.current.pause();
       audioPlayerRef.current.currentTime = 0;
-      setPlayingTrackId(null);
     }
-
+    setPlayingTrackId(null);
     setUploadedImage(imgData);
     setFileName(name);
     setTargetMood(sampleMood);
@@ -68,8 +67,8 @@ export default function Home() {
     if (audioPlayerRef.current) {
       audioPlayerRef.current.pause();
       audioPlayerRef.current.currentTime = 0;
-      setPlayingTrackId(null);
     }
+    setPlayingTrackId(null);
     setUploadedImage(null);
     setFileName("");
     setTargetMood(null);
@@ -93,7 +92,7 @@ export default function Home() {
     setRefreshIndex(0);
 
     try {
-      setStatusText("Reading light, warmth, and setting…");
+      setStatusText("Analyzing lighting, colors, and setting…");
 
       let imageBase64 = null;
       let mediaType = "image/jpeg";
@@ -165,8 +164,8 @@ export default function Home() {
     if (audioPlayerRef.current) {
       audioPlayerRef.current.pause();
       audioPlayerRef.current.currentTime = 0;
-      setPlayingTrackId(null);
     }
+    setPlayingTrackId(null);
 
     try {
       let imageBase64 = null;
@@ -213,30 +212,35 @@ export default function Home() {
     if (!player) return;
 
     if (playingTrackId === track.id) {
-      // Toggle play/pause
+      // Toggle play/pause for same track
       if (!player.paused) {
         player.pause();
         setPlayingTrackId(null);
       } else {
         player.play().then(() => {
           setPlayingTrackId(track.id);
-        }).catch((e) => console.warn("Audio play error:", e));
+        }).catch((e) => console.warn("Audio resume error:", e));
       }
       return;
     }
 
     // Play new track
     if (track.previewUrl) {
+      player.pause();
+      player.currentTime = 0;
       player.src = track.previewUrl;
       player.load();
-      player.play()
-        .then(() => {
-          setPlayingTrackId(track.id);
-        })
-        .catch((err) => {
-          console.warn("Audio playback interrupted or blocked:", err);
-          setPlayingTrackId(track.id);
-        });
+      const playPromise = player.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setPlayingTrackId(track.id);
+          })
+          .catch((err) => {
+            console.warn("Audio playback error:", err);
+            setPlayingTrackId(track.id);
+          });
+      }
     } else {
       setPlayingTrackId(track.id);
     }
@@ -254,7 +258,7 @@ export default function Home() {
 
   return (
     <div className="max-w-[1080px] mx-auto px-5 sm:px-8 py-10 sm:py-14 min-h-screen flex flex-col justify-between transition-colors duration-300">
-      {/* Hidden Global Audio Player for 100% Reliable Cross-Browser Playback */}
+      {/* Hidden DOM Audio Player positioned off-screen (never suspended) */}
       <audio
         ref={audioPlayerRef}
         preload="auto"
@@ -264,7 +268,15 @@ export default function Home() {
           console.warn("Audio element error:", e);
           setPlayingTrackId(null);
         }}
-        className="hidden"
+        style={{
+          position: "fixed",
+          top: -9999,
+          left: -9999,
+          width: 1,
+          height: 1,
+          opacity: 0,
+          pointerEvents: "none",
+        }}
       />
 
       <div>
