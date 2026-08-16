@@ -47,7 +47,6 @@ export default function Home() {
   const [tracks, setTracks] = useState([]);
   const [playingTrackId, setPlayingTrackId] = useState(null);
   const [selectedTrack, setSelectedTrack] = useState(null);
-  const [audioProgress, setAudioProgress] = useState(0);
   const [stickerStyle, setStickerStyle] = useState("vinyl");
   const [stickerPos, setStickerPos] = useState({ x: 0, y: 0 });
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
@@ -86,7 +85,6 @@ export default function Home() {
     if (audioPlayerRef.current) {
       audioPlayerRef.current.pause();
       setPlayingTrackId(null);
-      setAudioProgress(0);
     }
 
     setUploadedImage(imgData);
@@ -105,7 +103,6 @@ export default function Home() {
     if (audioPlayerRef.current) {
       audioPlayerRef.current.pause();
       setPlayingTrackId(null);
-      setAudioProgress(0);
     }
     setUploadedImage(null);
     setFileName("");
@@ -204,7 +201,6 @@ export default function Home() {
     if (audioPlayerRef.current) {
       audioPlayerRef.current.pause();
       setPlayingTrackId(null);
-      setAudioProgress(0);
     }
 
     try {
@@ -268,12 +264,6 @@ export default function Home() {
       const audio = new Audio(track.previewUrl);
       audioPlayerRef.current = audio;
 
-      audio.addEventListener("timeupdate", () => {
-        if (audio.duration) {
-          setAudioProgress(audio.currentTime / audio.duration);
-        }
-      });
-
       audio
         .play()
         .then(() => {
@@ -286,20 +276,9 @@ export default function Home() {
 
       audio.addEventListener("ended", () => {
         setPlayingTrackId(null);
-        setAudioProgress(0);
       });
     } else {
       setPlayingTrackId(track.id);
-    }
-  };
-
-  const handleSeekAudio = (track, progressFraction) => {
-    if (audioPlayerRef.current && playingTrackId === track.id) {
-      const duration = audioPlayerRef.current.duration || 30;
-      audioPlayerRef.current.currentTime = progressFraction * duration;
-      setAudioProgress(progressFraction);
-    } else {
-      handleTogglePlay(track);
     }
   };
 
@@ -345,11 +324,9 @@ export default function Home() {
               tracks={tracks}
               selectedTrack={selectedTrack}
               playingTrackId={playingTrackId}
-              audioProgress={audioProgress}
               isRefreshing={isRefreshing}
               onTogglePlay={handleTogglePlay}
               onSelectTrack={handleSelectTrack}
-              onSeekAudio={handleSeekAudio}
               onRefresh={handleRefreshTracks}
             />
           </div>

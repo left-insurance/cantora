@@ -6,11 +6,9 @@ export default function ResultsSection({
   tracks,
   selectedTrack,
   playingTrackId,
-  audioProgress,
   isRefreshing,
   onTogglePlay,
   onSelectTrack,
-  onSeekAudio,
   onRefresh,
 }) {
   if (!tracks || tracks.length === 0) return null;
@@ -62,10 +60,8 @@ export default function ResultsSection({
             index={index}
             isSelected={selectedTrack?.id === track.id}
             isPlaying={playingTrackId === track.id}
-            audioProgress={playingTrackId === track.id ? audioProgress : 0}
             onTogglePlay={() => onTogglePlay(track)}
             onSelect={() => onSelectTrack(track)}
-            onSeekAudio={(progress) => onSeekAudio(track, progress)}
           />
         ))}
       </div>
