@@ -32,7 +32,7 @@ export default function Home() {
   const [selectedTrack, setSelectedTrack] = useState(null);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
 
-  // Audio preview controller ref
+  // Hidden DOM audio player ref
   const audioPlayerRef = useRef(null);
 
   // Theme DOM synchronization
@@ -45,19 +45,10 @@ export default function Home() {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
 
-  // Cleanup audio on unmount
-  useEffect(() => {
-    return () => {
-      if (audioPlayerRef.current) {
-        audioPlayerRef.current.pause();
-        audioPlayerRef.current = null;
-      }
-    };
-  }, []);
-
   const handleImageSelected = (imgData, name, sampleMood = null, ctx = null) => {
     if (audioPlayerRef.current) {
       audioPlayerRef.current.pause();
+      audioPlayerRef.current.currentTime = 0;
       setPlayingTrackId(null);
     }
 
@@ -76,6 +67,7 @@ export default function Home() {
   const handleClearImage = () => {
     if (audioPlayerRef.current) {
       audioPlayerRef.current.pause();
+      audioPlayerRef.current.currentTime = 0;
       setPlayingTrackId(null);
     }
     setUploadedImage(null);
@@ -172,6 +164,7 @@ export default function Home() {
 
     if (audioPlayerRef.current) {
       audioPlayerRef.current.pause();
+      audioPlayerRef.current.currentTime = 0;
       setPlayingTrackId(null);
     }
 
@@ -186,8 +179,6 @@ export default function Home() {
         imageBase64 = parts[1];
       }
 
-      const previousTrackTitles = tracks.map((t) => `${t.artist} ${t.title}`);
-
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: {
@@ -199,7 +190,6 @@ export default function Home() {
           sampleMood: targetMood,
           visualContext,
           refreshIndex: nextRefreshIndex,
-          previousTracks: previousTrackTitles,
         }),
       });
 
@@ -218,35 +208,35 @@ export default function Home() {
   };
 
   const handleTogglePlay = (track) => {
+    if (!track) return;
+    const player = audioPlayerRef.current;
+    if (!player) return;
+
     if (playingTrackId === track.id) {
-      if (audioPlayerRef.current) {
-        audioPlayerRef.current.pause();
+      // Toggle play/pause
+      if (!player.paused) {
+        player.pause();
+        setPlayingTrackId(null);
+      } else {
+        player.play().then(() => {
+          setPlayingTrackId(track.id);
+        }).catch((e) => console.warn("Audio play error:", e));
       }
-      setPlayingTrackId(null);
       return;
     }
 
-    if (audioPlayerRef.current) {
-      audioPlayerRef.current.pause();
-    }
-
+    // Play new track
     if (track.previewUrl) {
-      const audio = new Audio(track.previewUrl);
-      audioPlayerRef.current = audio;
-
-      audio
-        .play()
+      player.src = track.previewUrl;
+      player.load();
+      player.play()
         .then(() => {
           setPlayingTrackId(track.id);
         })
-        .catch((e) => {
-          console.warn("Audio playback issue:", e);
+        .catch((err) => {
+          console.warn("Audio playback interrupted or blocked:", err);
           setPlayingTrackId(track.id);
         });
-
-      audio.addEventListener("ended", () => {
-        setPlayingTrackId(null);
-      });
     } else {
       setPlayingTrackId(track.id);
     }
@@ -264,6 +254,19 @@ export default function Home() {
 
   return (
     <div className="max-w-[1080px] mx-auto px-5 sm:px-8 py-10 sm:py-14 min-h-screen flex flex-col justify-between transition-colors duration-300">
+      {/* Hidden Global Audio Player for 100% Reliable Cross-Browser Playback */}
+      <audio
+        ref={audioPlayerRef}
+        preload="auto"
+        playsInline
+        onEnded={() => setPlayingTrackId(null)}
+        onError={(e) => {
+          console.warn("Audio element error:", e);
+          setPlayingTrackId(null);
+        }}
+        className="hidden"
+      />
+
       <div>
         {/* Editorial Header with Theme Toggle */}
         <Header theme={theme} onToggleTheme={handleToggleTheme} />
