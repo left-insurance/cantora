@@ -6,7 +6,6 @@ import UploadPanel from "@/components/UploadPanel";
 import StoryPreview from "@/components/StoryPreview";
 import ResultsSection from "@/components/ResultsSection";
 import StoryPublishModal from "@/components/StoryPublishModal";
-import AISettingsModal from "@/components/AISettingsModal";
 import { getMockRecommendations } from "@/lib/mockData";
 
 export default function Home() {
@@ -17,22 +16,6 @@ export default function Home() {
     }
     return "dark";
   });
-
-  const [userApiKey, setUserApiKey] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("cantora_user_api_key") || "";
-    }
-    return "";
-  });
-
-  const [aiProvider, setAiProvider] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("cantora_ai_provider") || "gemini";
-    }
-    return "gemini";
-  });
-
-  const [isAISettingsOpen, setIsAISettingsOpen] = useState(false);
 
   const [uploadedImage, setUploadedImage] = useState(null);
   const [fileName, setFileName] = useState("");
@@ -47,8 +30,6 @@ export default function Home() {
   const [tracks, setTracks] = useState([]);
   const [playingTrackId, setPlayingTrackId] = useState(null);
   const [selectedTrack, setSelectedTrack] = useState(null);
-  const [stickerStyle, setStickerStyle] = useState("vinyl");
-  const [stickerPos, setStickerPos] = useState({ x: 0, y: 0 });
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
 
   // Audio preview controller ref
@@ -62,13 +43,6 @@ export default function Home() {
 
   const handleToggleTheme = () => {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-  };
-
-  const handleSaveAISettings = (key, provider) => {
-    setUserApiKey(key);
-    setAiProvider(provider);
-    localStorage.setItem("cantora_user_api_key", key);
-    localStorage.setItem("cantora_ai_provider", provider);
   };
 
   // Cleanup audio on unmount
@@ -139,7 +113,7 @@ export default function Home() {
         imageBase64 = parts[1];
       }
 
-      setStatusText("Curating soundtrack with visual AI…");
+      setStatusText("Curating soundtrack for your story…");
 
       const res = await fetch("/api/analyze", {
         method: "POST",
@@ -152,8 +126,6 @@ export default function Home() {
           sampleMood: targetMood,
           visualContext,
           refreshIndex: 0,
-          userApiKey,
-          aiProvider,
         }),
       });
 
@@ -228,8 +200,6 @@ export default function Home() {
           visualContext,
           refreshIndex: nextRefreshIndex,
           previousTracks: previousTrackTitles,
-          userApiKey,
-          aiProvider,
         }),
       });
 
@@ -295,13 +265,8 @@ export default function Home() {
   return (
     <div className="max-w-[1080px] mx-auto px-5 sm:px-8 py-10 sm:py-14 min-h-screen flex flex-col justify-between transition-colors duration-300">
       <div>
-        {/* Editorial Header with Theme Toggle & AI Settings */}
-        <Header
-          theme={theme}
-          onToggleTheme={handleToggleTheme}
-          hasApiKey={!!userApiKey}
-          onOpenAISettings={() => setIsAISettingsOpen(true)}
-        />
+        {/* Editorial Header with Theme Toggle */}
+        <Header theme={theme} onToggleTheme={handleToggleTheme} />
 
         {/* Hero Section: 2 Columns on Desktop, collapsing on Mobile/Tablet */}
         <main className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 sm:gap-12 items-start">
@@ -339,10 +304,6 @@ export default function Home() {
               isPlayingTrack={
                 playingTrackId !== null && playingTrackId === selectedTrack?.id
               }
-              stickerStyle={stickerStyle}
-              onChangeStickerStyle={setStickerStyle}
-              stickerPos={stickerPos}
-              onChangeStickerPos={setStickerPos}
               onTogglePlaySelected={handleTogglePlaySelected}
               onOpenPublishModal={() => setIsPublishModalOpen(true)}
             />
@@ -359,18 +320,7 @@ export default function Home() {
         isPlayingTrack={
           playingTrackId !== null && playingTrackId === selectedTrack?.id
         }
-        stickerStyle={stickerStyle}
-        stickerPos={stickerPos}
         onTogglePlay={handleTogglePlaySelected}
-      />
-
-      {/* AI Settings Modal */}
-      <AISettingsModal
-        isOpen={isAISettingsOpen}
-        onClose={() => setIsAISettingsOpen(false)}
-        apiKey={userApiKey}
-        aiProvider={aiProvider}
-        onSave={handleSaveAISettings}
       />
 
       {/* Editorial Footer */}

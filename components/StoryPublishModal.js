@@ -8,8 +8,6 @@ export default function StoryPublishModal({
   imageUrl,
   selectedTrack,
   isPlayingTrack,
-  stickerStyle = "vinyl",
-  stickerPos = { x: 0, y: 0 },
   onTogglePlay,
 }) {
   const [copied, setCopied] = useState(false);
@@ -68,116 +66,65 @@ export default function StoryPublishModal({
 
         // Draw Music Sticker if track is selected
         if (selectedTrack) {
-          // Scale normalized preview offsets (phone frame approx 270x480 -> canvas 1080x1920, factor ~4x)
-          const offsetX = stickerPos.x * 4;
-          const offsetY = stickerPos.y * 4;
-
-          const baseStickerX = 100 + offsetX;
-          const baseStickerY = 1580 + offsetY;
+          const stickerX = 100;
+          const stickerY = 1580;
           const stickerW = 880;
           const stickerH = 140;
           const radius = 32;
 
           ctx.save();
+          ctx.fillStyle = "rgba(20, 10, 30, 0.88)";
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+          ctx.lineWidth = 3;
 
-          if (stickerStyle === "pill") {
-            // Minimal Pill
-            ctx.fillStyle = "rgba(255, 255, 255, 0.25)";
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.roundRect(baseStickerX, baseStickerY, stickerW, 110, 55);
-            ctx.fill();
-            ctx.stroke();
+          ctx.beginPath();
+          ctx.roundRect(stickerX, stickerY, stickerW, stickerH, radius);
+          ctx.fill();
+          ctx.stroke();
 
-            ctx.fillStyle = "#FF5D7A";
-            ctx.font = "bold 42px Inter, sans-serif";
-            ctx.fillText("♫", baseStickerX + 45, baseStickerY + 68);
+          // Vinyl record circle
+          const discCenterX = stickerX + 75;
+          const discCenterY = stickerY + stickerH / 2;
+          const discRadius = 45;
 
-            ctx.fillStyle = "#FFFFFF";
-            ctx.font = "bold 34px Inter, sans-serif";
-            ctx.fillText(`${selectedTrack.title}  ·  ${selectedTrack.artist}`, baseStickerX + 110, baseStickerY + 68, 720);
-          } else if (stickerStyle === "album") {
-            // Album Card
-            ctx.fillStyle = "rgba(20, 10, 30, 0.92)";
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.roundRect(baseStickerX, baseStickerY, stickerW, stickerH, 24);
-            ctx.fill();
-            ctx.stroke();
+          const discGrad = ctx.createConicGradient(0, discCenterX, discCenterY);
+          discGrad.addColorStop(0, "#FF5D7A");
+          discGrad.addColorStop(0.5, "#F2C14E");
+          discGrad.addColorStop(1, "#FF5D7A");
 
-            // Draw Album Art thumbnail
-            const artImg = new Image();
-            artImg.crossOrigin = "anonymous";
-            artImg.onload = () => {
-              ctx.drawImage(artImg, baseStickerX + 25, baseStickerY + 20, 100, 100);
-              finishDownload(canvas);
-            };
-            artImg.onerror = () => {
-              finishDownload(canvas);
-            };
+          ctx.fillStyle = discGrad;
+          ctx.beginPath();
+          ctx.arc(discCenterX, discCenterY, discRadius, 0, Math.PI * 2);
+          ctx.fill();
 
-            ctx.fillStyle = "#FFFFFF";
-            ctx.font = "bold 38px Inter, sans-serif";
-            ctx.fillText(selectedTrack.title, baseStickerX + 150, baseStickerY + 60, 680);
+          // Inner disc hole
+          ctx.fillStyle = "#140A1E";
+          ctx.beginPath();
+          ctx.arc(discCenterX, discCenterY, 15, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "#F2C14E";
+          ctx.beginPath();
+          ctx.arc(discCenterX, discCenterY, 6, 0, Math.PI * 2);
+          ctx.fill();
 
-            ctx.fillStyle = "#B3A2BE";
-            ctx.font = "30px Inter, sans-serif";
-            ctx.fillText(selectedTrack.artist, baseStickerX + 150, baseStickerY + 105, 680);
+          // Title text
+          ctx.fillStyle = "#FFFFFF";
+          ctx.font = "bold 38px Inter, -apple-system, sans-serif";
+          ctx.fillText(selectedTrack.title, stickerX + 150, stickerY + 60, 680);
 
-            artImg.src = selectedTrack.artworkUrl;
-            return; // Download triggered in artImg onload
-          } else {
-            // Default Vinyl & Waveform
-            ctx.fillStyle = "rgba(20, 10, 30, 0.88)";
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
-            ctx.lineWidth = 3;
-
-            ctx.beginPath();
-            ctx.roundRect(baseStickerX, baseStickerY, stickerW, stickerH, radius);
-            ctx.fill();
-            ctx.stroke();
-
-            // Vinyl record
-            const discCenterX = baseStickerX + 75;
-            const discCenterY = baseStickerY + stickerH / 2;
-            const discRadius = 45;
-
-            const discGrad = ctx.createConicGradient(0, discCenterX, discCenterY);
-            discGrad.addColorStop(0, "#FF5D7A");
-            discGrad.addColorStop(0.5, "#F2C14E");
-            discGrad.addColorStop(1, "#FF5D7A");
-
-            ctx.fillStyle = discGrad;
-            ctx.beginPath();
-            ctx.arc(discCenterX, discCenterY, discRadius, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Inner disc hole
-            ctx.fillStyle = "#140A1E";
-            ctx.beginPath();
-            ctx.arc(discCenterX, discCenterY, 15, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = "#F2C14E";
-            ctx.beginPath();
-            ctx.arc(discCenterX, discCenterY, 6, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Title & Artist
-            ctx.fillStyle = "#FFFFFF";
-            ctx.font = "bold 38px Inter, sans-serif";
-            ctx.fillText(selectedTrack.title, baseStickerX + 150, baseStickerY + 60, 680);
-
-            ctx.fillStyle = "#B3A2BE";
-            ctx.font = "30px Inter, sans-serif";
-            ctx.fillText(selectedTrack.artist, baseStickerX + 150, baseStickerY + 105, 680);
-          }
+          // Artist text
+          ctx.fillStyle = "#B3A2BE";
+          ctx.font = "30px Inter, -apple-system, sans-serif";
+          ctx.fillText(selectedTrack.artist, stickerX + 150, stickerY + 105, 680);
 
           ctx.restore();
         }
 
-        finishDownload(canvas);
+        const link = document.createElement("a");
+        link.download = `cantora-story-${selectedTrack?.title?.toLowerCase().replace(/\s+/g, "-") || "post"}.jpg`;
+        link.href = canvas.toDataURL("image/jpeg", 0.95);
+        link.click();
+        setIsExporting(false);
       };
 
       img.onerror = () => {
@@ -188,14 +135,6 @@ export default function StoryPublishModal({
     } catch {
       setIsExporting(false);
     }
-  };
-
-  const finishDownload = (canvas) => {
-    const link = document.createElement("a");
-    link.download = `cantora-story-${selectedTrack?.title?.toLowerCase().replace(/\s+/g, "-") || "post"}.jpg`;
-    link.href = canvas.toDataURL("image/jpeg", 0.95);
-    link.click();
-    setIsExporting(false);
   };
 
   return (
@@ -266,80 +205,40 @@ export default function StoryPublishModal({
               </div>
             )}
 
-            {/* Floating Music Sticker with Custom Position & Style */}
+            {/* Floating Music Sticker */}
             {selectedTrack && (
               <div
-                style={{
-                  transform: `translate(${stickerPos.x}px, ${stickerPos.y}px)`,
-                }}
                 onClick={onTogglePlay}
                 className="absolute left-3.5 right-3.5 bottom-14 z-20 cursor-pointer hover:scale-105 transition-transform"
               >
-                {stickerStyle === "pill" ? (
-                  <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-full py-2 px-4 flex items-center justify-between gap-2 shadow-[0_10px_30px_rgba(0,0,0,0.6)]">
-                    <div className="flex items-center gap-2 truncate">
-                      <span className="text-[#FF5D7A] text-xs">♫</span>
-                      <span className="font-inter font-semibold text-xs text-white truncate">
-                        {selectedTrack.title}
-                      </span>
-                      <span className="font-inter text-[10px] text-white/70 truncate">
-                        {selectedTrack.artist}
-                      </span>
-                    </div>
-                    {isPlayingTrack && (
-                      <div className="flex items-end gap-0.5 h-3">
-                        <span className="w-[2px] bg-[#FF5D7A] rounded-full eq-bar-1" />
-                        <span className="w-[2px] bg-[#F2C14E] rounded-full eq-bar-2" />
-                      </div>
-                    )}
-                  </div>
-                ) : stickerStyle === "album" ? (
-                  <div className="bg-[#140A1E]/90 backdrop-blur-md border border-white/25 rounded-2xl p-2.5 flex items-center gap-3 shadow-[0_10px_30px_rgba(0,0,0,0.6)]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={selectedTrack.artworkUrl}
-                      alt=""
-                      className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-white/15"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="font-inter font-semibold text-xs text-white truncate">
-                        {selectedTrack.title}
-                      </div>
-                      <div className="font-inter text-[10.5px] text-[#B3A2BE] truncate mt-0.5">
-                        {selectedTrack.artist}
-                      </div>
+                <div className="bg-[#140A1E]/85 backdrop-blur-md border border-white/25 rounded-2xl p-2.5 flex items-center gap-3 shadow-[0_10px_30px_rgba(0,0,0,0.6)]">
+                  <div
+                    className={`w-9 h-9 rounded-full bg-[conic-gradient(#FF5D7A,#F2C14E,#FF5D7A)] flex-shrink-0 flex items-center justify-center ${
+                      isPlayingTrack ? "animate-spin-slow" : ""
+                    }`}
+                  >
+                    <div className="w-3 h-3 rounded-full bg-[#140A1E] border border-white/20 flex items-center justify-center">
+                      <div className="w-1 h-1 rounded-full bg-[#F2C14E]" />
                     </div>
                   </div>
-                ) : (
-                  <div className="bg-[#140A1E]/85 backdrop-blur-md border border-white/25 rounded-2xl p-2.5 flex items-center gap-3 shadow-[0_10px_30px_rgba(0,0,0,0.6)]">
-                    <div
-                      className={`w-9 h-9 rounded-full bg-[conic-gradient(#FF5D7A,#F2C14E,#FF5D7A)] flex-shrink-0 flex items-center justify-center ${
-                        isPlayingTrack ? "animate-spin-slow" : ""
-                      }`}
-                    >
-                      <div className="w-3 h-3 rounded-full bg-[#140A1E] border border-white/20 flex items-center justify-center">
-                        <div className="w-1 h-1 rounded-full bg-[#F2C14E]" />
-                      </div>
-                    </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="font-inter font-semibold text-xs text-white truncate">
-                        {selectedTrack.title}
-                      </div>
-                      <div className="font-inter text-[10.5px] text-[#B3A2BE] truncate mt-0.5">
-                        {selectedTrack.artist}
-                      </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-inter font-semibold text-xs text-white truncate">
+                      {selectedTrack.title}
                     </div>
-
-                    {isPlayingTrack && (
-                      <div className="flex items-end gap-0.5 h-3.5 pr-1">
-                        <span className="w-[2.5px] bg-[#FF5D7A] rounded-full eq-bar-1" />
-                        <span className="w-[2.5px] bg-[#F2C14E] rounded-full eq-bar-2" />
-                        <span className="w-[2.5px] bg-[#FF5D7A] rounded-full eq-bar-3" />
-                      </div>
-                    )}
+                    <div className="font-inter text-[10.5px] text-[#B3A2BE] truncate mt-0.5">
+                      {selectedTrack.artist}
+                    </div>
                   </div>
-                )}
+
+                  {isPlayingTrack && (
+                    <div className="flex items-end gap-0.5 h-3.5 pr-1">
+                      <span className="w-[2.5px] bg-[#FF5D7A] rounded-full eq-bar-1" />
+                      <span className="w-[2.5px] bg-[#F2C14E] rounded-full eq-bar-2" />
+                      <span className="w-[2.5px] bg-[#FF5D7A] rounded-full eq-bar-3" />
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -365,7 +264,7 @@ export default function StoryPublishModal({
               Ready to post
             </h3>
             <p className="font-inter text-xs text-[var(--text-dim)] leading-relaxed mb-6">
-              Your photo and custom {stickerStyle} sticker are synchronized. Save the 1080×1920 image to post to your story.
+              Your photo and curated music track are synced. Save the 1080×1920 image to post directly to your Instagram story.
             </p>
 
             {/* Selected Track Details */}

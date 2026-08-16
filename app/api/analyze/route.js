@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-// Comprehensive multi-pool aesthetic catalog
+// Curated aesthetic catalogs
 const AESTHETIC_CATALOG = {
   "golden-hour": {
     mood: "golden hour melancholia",
@@ -20,11 +20,6 @@ const AESTHETIC_CATALOG = {
       "Rex Orange County Sunflower",
       "Arlo Parks Eugene",
       "Ray LaMontagne You Are the Best Thing",
-      "Leon Bridges Beyond",
-      "Dominic Fike Babydoll",
-      "Still Woozy Habit",
-      "Wild Nothing Chinatown",
-      "Real Estate Darling",
     ],
   },
   "coastal-ocean": {
@@ -44,10 +39,6 @@ const AESTHETIC_CATALOG = {
       "Jungle Keep Moving",
       "Surfaces Wave of You",
       "Dominic Fike Mona Lisa",
-      "Peach Pit Alrighty Aphrodite",
-      "Gus Dapperton Prune You Talk Funny",
-      "Wallows Scrawny",
-      "Hippo Campus Way It Goes",
     ],
   },
   "lush-nature": {
@@ -65,9 +56,6 @@ const AESTHETIC_CATALOG = {
       "Lord Huron Ends of the Earth",
       "Vance Joy Georgia",
       "Hollow Coves These Memories",
-      "Gregory Alan Isakov Big Black Car",
-      "Radical Face Welcome Home Son",
-      "The Lumineers Ophelia",
     ],
   },
   "nocturnal-neon": {
@@ -85,9 +73,6 @@ const AESTHETIC_CATALOG = {
       "KAYTRANADA 10%",
       "Disclosure Latch",
       "Channel Tres Topdown",
-      "Peggy Gou It Goes Like Nanana",
-      "Caribou Can't Do Without You",
-      "Odesza Sun Models",
     ],
   },
   "midnight-city": {
@@ -103,8 +88,6 @@ const AESTHETIC_CATALOG = {
       "KAYTRANADA Vex Oh",
       "070 Shake Guilty Conscience",
       "The Neighbourhood Sweater Weather",
-      "Drake Passionfruit",
-      "Brent Faiyaz Dead Man Walking",
     ],
   },
   "cozy-evening": {
@@ -122,8 +105,6 @@ const AESTHETIC_CATALOG = {
       "Lianne La Havas Green & Gold",
       "FKJ Ylang Ylang",
       "Bruno Major Easily",
-      "Joy Oladokun sunday",
-      "Arlo Parks Black Dog",
     ],
   },
   "vintage-analog": {
@@ -139,8 +120,6 @@ const AESTHETIC_CATALOG = {
       "King Krule Baby Blue",
       "Cosmo Pyke Chronic Sunshine",
       "Loving Only She Knows",
-      "The Walters I Love You So",
-      "Summer Salt Driving to Hawaii",
     ],
   },
   "dream-pop-magenta": {
@@ -156,8 +135,6 @@ const AESTHETIC_CATALOG = {
       "No Vacation Yam Yam",
       "Beach Fossils Down the Line",
       "Fazerdaze Lucky Girl",
-      "Cannons Fire for You",
-      "Men I Trust Numb",
     ],
   },
   "minimal-monochrome": {
@@ -173,7 +150,6 @@ const AESTHETIC_CATALOG = {
       "James Blake Retrograde",
       "London Grammar Strong",
       "RY X Berlin",
-      "Chet Faker Gold",
     ],
   },
   "sun-drenched": {
@@ -189,8 +165,6 @@ const AESTHETIC_CATALOG = {
       "Vampire Weekend A-Punk",
       "Young the Giant Cough Syrup",
       "Saint Motel My Type",
-      "Walk the Moon Shut Up and Dance",
-      "Bad Suns Daft Pretty Boys",
     ],
   },
 };
@@ -216,8 +190,8 @@ async function searchITunes(query, limit = 5) {
   }
 }
 
-async function findFiveTracks(queries, excludeIds = []) {
-  const seenIds = new Set(excludeIds.map(String));
+async function findFiveTracks(queries) {
+  const seenIds = new Set();
   const seenTitles = new Set();
   const tracks = [];
 
@@ -303,196 +277,41 @@ export async function POST(req) {
   try {
     const body = await req.json();
     const {
-      imageBase64,
-      mediaType = "image/jpeg",
       sampleMood,
       visualContext,
       refreshIndex = 0,
-      previousTracks = [],
-      userApiKey,
-      aiProvider = "gemini",
     } = body;
 
-    // Check request header or body for user API key
-    const anthropicKey =
-      userApiKey && aiProvider === "anthropic"
-        ? userApiKey
-        : process.env.ANTHROPIC_API_KEY;
-    const geminiKey =
-      userApiKey && (aiProvider === "gemini" || !aiProvider)
-        ? userApiKey
-        : process.env.GEMINI_API_KEY;
+    let chosenKey = "golden-hour";
 
-    let mood = sampleMood || null;
-    let queries = null;
-    let aiUsed = false;
-
-    // Previous tracks to exclude on refresh
-    const excludeInstruction =
-      previousTracks.length > 0
-        ? `\nIMPORTANT: The user wants NEW recommendations. Do NOT include any of these previous tracks: ${previousTracks.join(
-            ", "
-          )}. Suggest 5 COMPLETELY NEW and different tracks.`
-        : "";
-
-    // 1. Gemini Vision AI
-    if (geminiKey && imageBase64 && !queries) {
-      try {
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [
-                {
-                  parts: [
-                    {
-                      text: `You are an expert music supervisor picking 5 soundtrack songs for an Instagram Story based on this photo.
-Analyze lighting, time of day, setting, colors, and emotional tone:
-- Sunset/golden hour: warm indie, folk, dream pop, acoustic.
-- Beach/ocean: coastal indie pop, summer groove.
-- Night/city/neon: nocturnal synthwave, electronic, late-night R&B.
-- Nature/forest: organic indie folk, ambient acoustic.
-- Cafe/interior: warm neo-soul, acoustic jazz, lo-fi.${excludeInstruction}
-
-Respond with ONLY valid JSON: {"mood":"2-4 word evocative mood description","queries":["Artist Song Title","Artist Song Title","Artist Song Title","Artist Song Title","Artist Song Title"]}`,
-                    },
-                    {
-                      inlineData: {
-                        mimeType: mediaType,
-                        data: imageBase64,
-                      },
-                    },
-                  ],
-                },
-              ],
-            }),
-          }
-        );
-
-        if (geminiRes.ok) {
-          const gData = await geminiRes.json();
-          const gText = gData.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (gText) {
-            const cleaned = gText
-              .trim()
-              .replace(/^```json/i, "")
-              .replace(/^```/, "")
-              .replace(/```$/, "")
-              .trim();
-            const parsed = JSON.parse(cleaned);
-            if (parsed.mood) mood = parsed.mood.toLowerCase();
-            if (Array.isArray(parsed.queries) && parsed.queries.length >= 3) {
-              queries = parsed.queries;
-              aiUsed = true;
-            }
-          }
-        }
-      } catch (e) {
-        console.warn("Gemini vision error:", e);
-      }
+    if (sampleMood && AESTHETIC_CATALOG[sampleMood]) {
+      chosenKey = sampleMood;
+    } else if (visualContext?.vibeHint && AESTHETIC_CATALOG[visualContext.vibeHint]) {
+      chosenKey = visualContext.vibeHint;
+    } else if (visualContext?.isDark && visualContext?.primaryColor === "neon-purple") {
+      chosenKey = "nocturnal-neon";
+    } else if (visualContext?.isDark) {
+      chosenKey = "midnight-city";
+    } else if (visualContext?.primaryColor === "emerald") {
+      chosenKey = "lush-nature";
+    } else if (visualContext?.primaryColor === "ocean-blue") {
+      chosenKey = "coastal-ocean";
+    } else if (visualContext?.isWarm) {
+      chosenKey = "golden-hour";
     }
 
-    // 2. Claude Vision AI
-    if (anthropicKey && imageBase64 && !queries) {
-      try {
-        const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": anthropicKey,
-            "anthropic-version": "2023-06-01",
-          },
-          body: JSON.stringify({
-            model: "claude-3-5-sonnet-20241022",
-            max_tokens: 600,
-            messages: [
-              {
-                role: "user",
-                content: [
-                  {
-                    type: "image",
-                    source: {
-                      type: "base64",
-                      media_type: mediaType,
-                      data: imageBase64,
-                    },
-                  },
-                  {
-                    type: "text",
-                    text: `You are an editorial music supervisor picking 5 soundtrack songs for an Instagram Story.
-Carefully examine the photo's exact lighting, setting, subject, and colors:
-- Sunset/golden hour: warm indie folk, acoustic, dream pop.
-- Nature/forest: cinematic indie folk, acoustic ambient.
-- Ocean/beach: sun-drenched coastal indie pop.
-- Night/city: nocturnal synthwave, electronic, late-night R&B.
-- Cafe/cozy: warm neo-soul, acoustic jazz.${excludeInstruction}
+    const aesthetic = AESTHETIC_CATALOG[chosenKey] || AESTHETIC_CATALOG["golden-hour"];
+    const mood = aesthetic.mood;
 
-Return ONLY valid JSON: {"mood":"2-4 word evocative mood description","queries":["Artist Song Title","Artist Song Title","Artist Song Title","Artist Song Title","Artist Song Title"]}`,
-                  },
-                ],
-              },
-            ],
-          }),
-        });
+    // Cycle through song pool on refresh
+    const pool = aesthetic.pool;
+    const baseSeed = (visualContext?.imageHash || 0) % pool.length;
+    const offsetSeed = (baseSeed + refreshIndex * 5) % pool.length;
 
-        if (aiRes.ok) {
-          const data = await aiRes.json();
-          const textBlock = (data.content || []).find((b) => b.type === "text");
-          if (textBlock?.text) {
-            const cleaned = textBlock.text
-              .trim()
-              .replace(/^```json/i, "")
-              .replace(/^```/, "")
-              .replace(/```$/, "")
-              .trim();
-            const parsed = JSON.parse(cleaned);
-            if (parsed.mood) mood = parsed.mood.toLowerCase();
-            if (Array.isArray(parsed.queries) && parsed.queries.length >= 3) {
-              queries = parsed.queries;
-              aiUsed = true;
-            }
-          }
-        }
-      } catch (e) {
-        console.warn("Anthropic vision error:", e);
-      }
-    }
-
-    // 3. Dynamic Visual & Color Categorization Engine with Refresh Cycling
-    if (!queries) {
-      let chosenKey = "golden-hour";
-
-      if (sampleMood && AESTHETIC_CATALOG[sampleMood]) {
-        chosenKey = sampleMood;
-      } else if (visualContext?.vibeHint && AESTHETIC_CATALOG[visualContext.vibeHint]) {
-        chosenKey = visualContext.vibeHint;
-      } else if (visualContext?.isDark && visualContext?.primaryColor === "neon-purple") {
-        chosenKey = "nocturnal-neon";
-      } else if (visualContext?.isDark) {
-        chosenKey = "midnight-city";
-      } else if (visualContext?.primaryColor === "emerald") {
-        chosenKey = "lush-nature";
-      } else if (visualContext?.primaryColor === "ocean-blue") {
-        chosenKey = "coastal-ocean";
-      } else if (visualContext?.isWarm) {
-        chosenKey = "golden-hour";
-      }
-
-      const aesthetic = AESTHETIC_CATALOG[chosenKey] || AESTHETIC_CATALOG["golden-hour"];
-      mood = mood || aesthetic.mood;
-
-      // Cycle through song pool on refresh
-      const pool = aesthetic.pool;
-      const baseSeed = (visualContext?.imageHash || 0) % pool.length;
-      const offsetSeed = (baseSeed + refreshIndex * 5) % pool.length;
-
-      queries = [];
-      for (let i = 0; i < 5; i++) {
-        const index = (offsetSeed + i) % pool.length;
-        queries.push(pool[index]);
-      }
+    const queries = [];
+    for (let i = 0; i < 5; i++) {
+      const index = (offsetSeed + i) % pool.length;
+      queries.push(pool[index]);
     }
 
     // Retrieve real catalog tracks
@@ -500,9 +319,8 @@ Return ONLY valid JSON: {"mood":"2-4 word evocative mood description","queries":
 
     return NextResponse.json({
       success: true,
-      mood: mood || "golden hour melancholia",
+      mood,
       tracks,
-      aiUsed,
     });
   } catch (error) {
     console.error("Analyze route error:", error);
