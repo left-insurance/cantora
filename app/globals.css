@@ -1,26 +1,161 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg: #1B1023;
+    --bg-alt: #241531;
+    --panel: #2A1938;
+    --panel-hover: #341F45;
+    --panel-card: #22132E;
+    --accent-coral: #FF5D7A;
+    --accent-coral-hover: #FF738D;
+    --accent-coral-soft: rgba(255, 93, 122, 0.12);
+    --accent-gold: #F2C14E;
+    --accent-gold-soft: rgba(242, 193, 78, 0.12);
+    --text: #F5EFEA;
+    --text-dim: #B3A2BE;
+    --text-muted: #8E7B99;
+    --line: rgba(245, 239, 234, 0.12);
+    --line-hover: rgba(245, 239, 234, 0.24);
+    --line-coral: rgba(255, 93, 122, 0.45);
+    --card-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
+  }
+
+  [data-theme="light"] {
+    --bg: #FAF6F0;
+    --bg-alt: #F2EBE0;
+    --panel: #FFFFFF;
+    --panel-hover: #F8F3EC;
+    --panel-card: #FDFBF8;
+    --accent-coral: #E63956;
+    --accent-coral-hover: #D42B46;
+    --accent-coral-soft: rgba(230, 57, 86, 0.08);
+    --accent-gold: #B87B0E;
+    --accent-gold-soft: rgba(184, 123, 14, 0.1);
+    --text: #20132A;
+    --text-dim: #6E5E7A;
+    --text-muted: #8F819A;
+    --line: rgba(32, 19, 42, 0.1);
+    --line-hover: rgba(32, 19, 42, 0.22);
+    --line-coral: rgba(230, 57, 86, 0.45);
+    --card-shadow: 0 10px 30px rgba(32, 19, 42, 0.06);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: var(--bg);
+    background-image: 
+      radial-gradient(ellipse 80% 50% at 20% -10%, rgba(85, 37, 107, 0.35) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 110%, rgba(255, 93, 122, 0.12) 0%, transparent 70%),
+      radial-gradient(ellipse at 50% 50%, var(--bg-alt) 0%, var(--bg) 100%);
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  body[data-theme="light"] {
+    background-image: 
+      radial-gradient(ellipse 80% 50% at 20% -10%, rgba(215, 185, 235, 0.3) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 110%, rgba(255, 175, 190, 0.18) 0%, transparent 70%),
+      radial-gradient(ellipse at 50% 50%, #F5EDE2 0%, #FAF6F0 100%);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Typography helper utilities */
+.font-fraunces {
+  font-family: var(--font-fraunces), serif;
+}
+
+.font-inter {
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+}
+
+.font-plex {
+  font-family: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Custom animations */
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 4.5s linear infinite;
+}
+
+@keyframes eqBar1 {
+  0%, 100% { height: 4px; }
+  50% { height: 16px; }
+}
+@keyframes eqBar2 {
+  0%, 100% { height: 14px; }
+  50% { height: 6px; }
+}
+@keyframes eqBar3 {
+  0%, 100% { height: 8px; }
+  50% { height: 18px; }
+}
+
+.eq-bar-1 {
+  animation: eqBar1 0.7s ease-in-out infinite;
+}
+.eq-bar-2 {
+  animation: eqBar2 0.55s ease-in-out infinite;
+}
+.eq-bar-3 {
+  animation: eqBar3 0.85s ease-in-out infinite;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(255, 93, 122, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 93, 122, 0.35);
+  }
+}
+
+.glow-coral {
+  animation: pulseGlow 2.5s ease-in-out infinite;
+}
+
+/* Scrollbar polish */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line-hover);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
 }
